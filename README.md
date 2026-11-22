@@ -1,17 +1,12 @@
 # Bluetooth Audio Receptor
 
-MVP para Windows 11 que permite recibir audio de dispositivos Bluetooth compatibles con **A2DP Source** y reproducirlo mediante la **salida de audio predeterminada de Windows**, utilizando la API nativa `Windows.Media.Audio.AudioPlaybackConnection`.
+Aplicación Windows 11 / WPF / .NET 10 que intenta recibir audio A2DP de fuentes Bluetooth previamente emparejadas usando la API oficial `AudioPlaybackConnection`.
 
-## Estado
+## Estado actual
 
-Primera implementación de la app de escritorio **WPF + .NET 10** en `feature/a2dp-sink-mvp`. Código cargado para prueba local: **todavía no fue compilado ni validado con una consola real**.
+Rama: `feature/a2dp-sink-mvp`. Se ajustó el flujo tras la primera prueba: enumeración en tiempo real con `DeviceWatcher`, habilitar recepción (`StartAsync`) y abrir audio (`OpenAsync`) como operaciones independientes, mensajes de errores/HRESULT y accesos a opciones Bluetooth de Windows.
 
-## Requisitos
-
-- Windows 11 con Bluetooth funcionando y controladores que soporten A2DP Sink.
-- .NET 10 SDK para compilar desde código.
-- Consola/dispositivo Bluetooth que pueda enviar audio por A2DP y esté emparejado con Windows.
-- Parlantes o interfaz de audio configurados como **salida predeterminada** en Windows.
+**Importante:** abrir Configuración Bluetooth y activar descubrimiento no equivale a anunciar un dispositivo de audio A2DP Sink. La API utilizada no proporciona una función para transformar a Windows en auriculares Bluetooth universalmente detectables por la Switch. Esto puede requerir capacidades de perfil y del stack Bluetooth que Windows no exponga desde la app. No se garantiza que Nintendo Switch se pueda emparejar ni conectar.
 
 ## Ejecutar
 
@@ -22,18 +17,27 @@ git checkout feature/a2dp-sink-mvp
 dotnet run --project .\BluetoothAudioReceptor\BluetoothAudioReceptor.csproj
 ```
 
-Primero emparejá la fuente desde **Configuración > Bluetooth y dispositivos** de Windows. Abrí la aplicación, tocá **Buscar dispositivos**, seleccioná la fuente y elegí **Conectar audio**. La recepción utiliza el dispositivo de reproducción predeterminado, sin cambiar esa configuración.
+Requisitos: Windows 11, adaptador Bluetooth con soporte A2DP Sink, SDK .NET 10 para compilar y dispositivo remoto capaz de enviar audio A2DP.
 
-Si la consola no aparece al buscar, el emparejamiento A2DP Source ↔ A2DP Sink puede no ser posible en esa combinación de hardware, firmware y drivers. La búsqueda enumera endpoints compatibles; no es un escáner Bluetooth genérico.
+## Prueba
+
+1. En Windows: Configuración → Bluetooth y dispositivos. Intentar emparejar una fuente de audio Bluetooth.
+2. En la app, observar los endpoints detectados automáticamente. **No es un escáner de consolas no emparejadas**.
+3. Seleccionar un endpoint remoto genuino (un elemento llamado «Desktop» puede ser otra PC o un endpoint que no corresponda a la Switch).
+4. «Habilitar recepción» y después «Conectar audio», o iniciar conexión desde la fuente cuando el sistema lo permita.
+5. Copiar el mensaje de estado completo. Los errores CLR/COM muestran HRESULT cuando corresponda.
 
 ## Limitaciones
 
-- **Switch 1 / Switch 2:** la capacidad de enviar audio A2DP no garantiza que puedan emparejarse como fuente con una PC Windows; hay que probarlo en hardware real.
-- **PS3:** no envía el audio completo de los juegos por Bluetooth A2DP estándar, por lo que esta app no puede capturarlo así.
-- **Latencia:** el perfil Bluetooth A2DP puede introducir retraso audible.
-- La app no modifica drivers ni la salida predeterminada, y no implementa todavía selección de endpoint, control de volumen propio, inicio automático, instalador ni reconexión.
-- Si `OpenAsync` falla, la UI muestra el resultado devuelto por Windows; no implica que el adaptador Bluetooth esté averiado.
+- No probado ni compilado en Windows en esta sesión.
+- La PC puede mostrarse como equipo Bluetooth, pero no necesariamente como auriculares o parlante.
+- Nintendo Switch requiere dispositivo receptor A2DP con SBC y descubrimiento compatible.
+- PS3 no envía audio general de juegos por A2DP.
+- No se cambian drivers, registro ni dispositivo de audio predeterminado.
+- Los dispositivos sin emparejar no aparecen mediante `AudioPlaybackConnection.GetDeviceSelector()`.
+- A2DP puede tener latencia de juego.
 
-## Referencia oficial
+## Documentación
 
-- [Microsoft Learn: Enable audio playback from remote Bluetooth-connected devices](https://learn.microsoft.com/en-us/windows/apps/develop/media-playback/enable-remote-audio-playback)
+- [Microsoft: Enable audio playback from remote Bluetooth-connected devices](https://learn.microsoft.com/en-us/windows/apps/develop/media-playback/enable-remote-audio-playback)
+- [Nintendo: Bluetooth Audio](https://www.nintendo.com/my/support/switch/accessories/bluetooth_audio.html)
